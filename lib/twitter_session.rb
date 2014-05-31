@@ -5,8 +5,8 @@ require 'oauth'
 require 'launchy'
 
 class TwitterSession
-  CONSUMER_KEY = "i50GOFLLHTTixmk7B1z9gMHG7"
-  CONSUMER_SECRET = "gFD1Uld4ia5RIrP97ek37jm2KoxawcV0cuEUG1fvbCI8tl8pOc"
+  CONSUMER_KEY = ""
+  CONSUMER_SECRET = ""
 
   CONSUMER = OAuth::Consumer.new(
     CONSUMER_KEY, CONSUMER_SECRET, :site => "https://twitter.com")
