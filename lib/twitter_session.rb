@@ -71,10 +71,13 @@ class TwitterSession
   end
 end
 
-# TwitterSession.get(
-#   "statuses/user_timeline",
-#   { :user_id => "973274587" }
-# )
+statuses = TwitterSession.get(
+  "statuses/user_timeline",
+  { :user_id => "973274587" }
+)
+
+puts statuses
+
 # TwitterSession.post(
 #   "statuses/update",
 #   { :status => "New Status!" }
