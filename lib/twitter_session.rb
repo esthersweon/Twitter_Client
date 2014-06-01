@@ -9,41 +9,41 @@ class TwitterSession
   CONSUMER_SECRET = "gFD1Uld4ia5RIrP97ek37jm2KoxawcV0cuEUG1fvbCI8tl8pOc"
 
   CONSUMER = OAuth::Consumer.new(
-    CONSUMER_KEY, CONSUMER_SECRET, :site => "https://twitter.com")
+    CONSUMER_KEY, CONSUMER_SECRET, site: "https://twitter.com")
 
-# All Twitter API calls have "https://api.twitter.com/1.1/#{path}.json" format
-# Varies only with path
-  def self.path_as_url(path, query_values = nil)
-    Addressable::URI.new(
-      :scheme => "https",
-      :host => "api.twitter.com",
-      :path => "1.1/#{path}.json",
-      :query_values => query_values
-    ).to_s
-  end
+  TOKEN_FILE_NAME = "access_token.yml"
 
   def self.access_token
-    @TOKEN_FILE = "access_token.yml"
-    if File.exist?(@TOKEN_FILE)
-      File.open(@TOKEN_FILE) { |f| YAML.load(f) }
+    return @access_token unless @access_token.nil?
+    if File.exist?(TOKEN_FILE_NAME)
+      @access_token = File.open(TOKEN_FILE_NAME) { |f| YAML.load(f) }
     else
-      access_token = request_access_token
-      File.open(@TOKEN_FILE, "w") { |f| YAML.dump(access_token, f) }
+      @access_token = request_access_token
+      File.open(TOKEN_FILE_NAME, "w") { |f| YAML.dump(@access_token, f) }
+      @access_token
     end
   end
 
   def self.request_access_token
     request_token = CONSUMER.get_request_token
     authorize_url = request_token.authorize_url
-
-    puts "Go to #{authorize_url}"
     Launchy.open(authorize_url)
 
-    puts "Log in, and type in your verification code"
+    puts "Log in, and type in the verification code."
     oauth_verifier = gets.chomp
-    access_token = request_token.get_access_token(
-      :oauth_verifier => oauth_verifier
-    )
+    access_token = request_token.get_access_token(oauth_verifier: oauth_verifier)
+    access_token
+  end
+
+  # All Twitter API calls have "https://api.twitter.com/1.1/#{path}.json" format
+  # Varies only with path
+  def self.path_as_url(path, query_values = nil)
+    Addressable::URI.new(
+      scheme: "https",
+      host: "api.twitter.com",
+      path: "1.1/#{path}.json",
+      query_values: query_values
+    ).to_s
   end
 
   def self.get(path, query_values)
@@ -58,15 +58,3 @@ class TwitterSession
     results = JSON.parse(response)
   end
 end
-
-statuses = TwitterSession.get(
-  "statuses/user_timeline",
-  { :user_id => "973274587" }
-)
-
-puts statuses
-
-TwitterSession.post(
-  "statuses/update",
-  { :status => "New Status!" }
-)
