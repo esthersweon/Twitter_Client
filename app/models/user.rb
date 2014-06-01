@@ -9,12 +9,12 @@
 #  updated_at      :datetime
 #
 
-require 'launchy'
-require 'json'
-require 'addressable/uri'
+require 'twitter_session'
 require 'open-uri'
 
 class User < ActiveRecord::Base
+  attr_accessible(:twitter_user_id, :screen_name)
+
   validates :screen_name, :twitter_user_id, presence: true
   validates :screen_name, :twitter_user_id, uniqueness: true
 
@@ -23,37 +23,34 @@ class User < ActiveRecord::Base
   foreign_key: :twitter_user_id, 
   primary_key: :twitter_user_id
 
-  def self.get_by_screen_name(screen_name)
-    if internet_connection?
-      fetch_by_screen_name!(screen_name)
-    end
-    user = User.where({screen_name: screen_name})
-  end
-
   def self.fetch_by_screen_name!(screen_name)
     fetched_user_params = TwitterSession.get("users/show", {screen_name: screen_name})
     
-    fetched_user = parse_twitter_user(fetched_user_params)
+    fetched_user = self.parse_twitter_user(fetched_user_params)
 
     fetched_user.save!
 
     fetched_user
   end
 
+  def self.get_by_screen_name(screen_name)
+    user = User.find_by_screen_name(screen_name)
+
+    if user.nil?
+      user = User.fetch_by_screen_name!(screen_name)
+    end
+
+    user
+  end
+
   def self.parse_twitter_user(user_params)
     User.new(
-      screenname: user_params["screen_name"], 
+      screen_name: user_params["screen_name"], 
       twitter_user_id: user_params["id_str"]
     )
   end
 
-  def initialize(screenname, twitter_user_id)
-    @screen_name = screen_name
-    @twitter_user_id = twitter_user_id
-  end
-
-  def self.fetch_statuses!
+  def fetch_statuses!
     Status.fetch_by_twitter_user_id!(self.twitter_user_id)
   end
-
 end
